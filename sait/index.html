@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Symmetric Encryption Lab</title>
+
+<!-- CryptoJS: AES + DES + Blowfish -->
+<script src="https://cdn.jsdelivr.net/npm/crypto-js@4.2.0/crypto-js.js"></script>
+
+<style>
+:root{
+  --bg:#070b14;
+  --panel:#0d1322;
+  --panel2:#11192b;
+  --line:#202c46;
+  --text:#eef3ff;
+  --muted:#8995b0;
+  --accent:#6d7cff;
+  --cyan:#35d6c7;
+  --danger:#ff6b7a;
+  --shadow:0 24px 70px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  color:var(--text);
+  background:
+    radial-gradient(circle at 10% 0%,rgba(109,124,255,.14),transparent 30%),
+    radial-gradient(circle at 90% 10%,rgba(53,214,199,.09),transparent 28%),
+    var(--bg);
+  font-family:Inter,Segoe UI,Arial,sans-serif;
+}
+button,input,textarea,select{font:inherit}
+button{cursor:pointer}
+.app{max-width:1320px;margin:auto;padding:30px 22px 60px}
+.header{
+  border:1px solid var(--line); border-radius:24px; padding:28px;
+  background:linear-gradient(135deg,rgba(17,25,43,.95),rgba(8,13,24,.92));
+  box-shadow:var(--shadow); margin-bottom:20px;
+}
+.eyebrow{font-size:12px;letter-spacing:.18em;color:#9ca8ff;font-weight:800}
+h1{font-size:40px;margin:8px 0 8px;letter-spacing:-1.2px}
+.header p{margin:0;color:var(--muted);font-size:16px}
+.grid{display:grid;grid-template-columns:300px 1fr;gap:18px}
+.panel{
+  border:1px solid var(--line);border-radius:20px;background:rgba(13,19,34,.9);
+  box-shadow:var(--shadow);padding:20px;
+}
+.sidebar h3{margin:0 0 15px}
+label{display:block;color:#aeb8cf;font-size:13px;font-weight:700;margin:15px 0 7px}
+select,input,textarea{
+  width:100%;background:#080e1b;color:var(--text);border:1px solid #263452;
+  border-radius:12px;padding:12px 13px;outline:none;
+}
+select:focus,input:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(109,124,255,.12)}
+textarea{min-height:170px;resize:vertical}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.actions{display:flex;gap:10px;margin-top:15px}
+.btn{
+  border:1px solid #2b395b;background:#121b30;color:#eaf0ff;
+  border-radius:12px;padding:12px 16px;font-weight:800;
+}
+.btn.primary{background:linear-gradient(135deg,#6575ff,#5867dd);border-color:#7785ff}
+.btn.secondary{background:#0b1424}
+.btn:hover{transform:translateY(-1px);filter:brightness(1.08)}
+.pill{
+  display:inline-flex;align-items:center;gap:7px;padding:7px 10px;
+  border-radius:999px;background:rgba(109,124,255,.10);border:1px solid #29355a;
+  color:#bac4ff;font-size:12px;font-weight:800;
+}
+.info{margin-top:16px;padding:13px;border:1px solid #263451;border-radius:13px;color:#909db9;font-size:12px;line-height:1.55}
+.result{margin-top:18px}
+.result-box{
+  background:#070c16;border:1px solid #263452;border-radius:15px;padding:15px;
+}
+.result-label{color:#7f8ca8;text-transform:uppercase;letter-spacing:.12em;font-size:11px;font-weight:800}
+.result-text{
+  margin-top:8px;font-family:"JetBrains Mono",Consolas,monospace;
+  font-size:15px;word-break:break-all;color:#dce5ff;line-height:1.6;
+}
+.result-text.big{font-size:19px}
+.tabs{display:flex;gap:7px;margin-top:20px;border-bottom:1px solid var(--line);padding-bottom:8px}
+.tab{
+  border:1px solid transparent;background:transparent;color:#8290ad;
+  padding:9px 12px;border-radius:10px;font-weight:700
+}
+.tab.active{background:#131d33;color:#eaf0ff;border-color:#29375a}
+.tabcontent{padding-top:18px}
+.hidden{display:none}
+.flow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.flow .box{
+  padding:10px 13px;background:rgba(109,124,255,.08);border:1px solid #29375a;
+  border-radius:10px;font-size:12px;font-weight:800
+}
+.arrow{color:#65739b}
+.round{
+  display:grid;grid-template-columns:72px 1fr 1fr 1fr;gap:10px;
+  padding:10px;border-bottom:1px solid #17223a;font-family:Consolas,monospace;font-size:12px
+}
+.round:first-child{color:#aeb9d2}
+.badge{display:inline-block;border-radius:7px;padding:4px 7px;background:#121c31;color:#9caaff}
+.note{
+  margin-top:14px;padding:12px 14px;border-radius:12px;
+  background:rgba(53,214,199,.05);border:1px solid rgba(53,214,199,.18);color:#91aaa8;
+  font-size:12px;line-height:1.55
+}
+.error{margin-top:14px;padding:12px 14px;border-radius:12px;background:rgba(255,107,122,.07);border:1px solid rgba(255,107,122,.25);color:#ffadb7}
+.footer{text-align:center;color:#586681;font-size:12px;margin-top:20px}
+@media(max-width:900px){.grid{grid-template-columns:1fr}.row{grid-template-columns:1fr}h1{font-size:31px}}
+</style>
+</head>
+
+<body>
+<div class="app">
+  <header class="header">
+    <div class="eyebrow">CYBERSECURITY • PRACTICAL APPLICATION</div>
+    <h1>🔐 Symmetric Encryption Lab</h1>
+    <p>DES • AES-128 • Blowfish — деректерді өзің енгізіп, бірден шифрлап/дешифрлап көр.</p>
+  </header>
+
+  <div class="grid">
+    <aside class="panel sidebar">
+      <h3>⚙️ Параметрлер</h3>
+
+      <label>Алгоритм</label>
+      <select id="algorithm">
+        <option value="AES">AES-128</option>
+        <option value="DES">DES</option>
+        <option value="BLOWFISH">Blowfish</option>
+      </select>
+
+      <label>Әрекет</label>
+      <select id="action">
+        <option value="encrypt">🔒 Шифрлау</option>
+        <option value="decrypt">🔓 Дешифрлау</option>
+      </select>
+
+      <div id="algorithmInfo" class="info"></div>
+
+      <button class="btn secondary" style="width:100%;margin-top:15px" id="demo">🧪 Демо мәндерін толтыру</button>
+      <button class="btn secondary" style="width:100%;margin-top:8px" id="clear">🧹 Тазалау</button>
+
+      <div class="note">
+        <b>Ескерту:</b> бұл оқу/демонстрациялық лаборатория. Шынайы құпия парольдер мен өндірістік кілттерді енгізбе.
+      </div>
+    </aside>
+
+    <main class="panel">
+      <div class="row">
+        <div>
+          <label id="dataLabel">Мәтін</label>
+          <textarea id="data" placeholder="Мысалы: Hello AES Lab"></textarea>
+        </div>
+        <div>
+          <label id="keyLabel">Кілт</label>
+          <input id="key" type="text" placeholder="Кілтті енгізіңіз">
+          <div class="info" id="keyInfo"></div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn primary" id="run" style="flex:1">🚀 ШИФРЛАУ</button>
+        <button class="btn" id="copy">📋 Нәтижені көшіру</button>
+      </div>
+
+      <div id="error"></div>
+
+      <section class="result">
+        <div class="row">
+          <div class="result-box">
+            <div class="result-label">Нәтиже / Base64</div>
+            <div id="base64" class="result-text">—</div>
+          </div>
+          <div class="result-box">
+            <div class="result-label">Нәтиже / HEX</div>
+            <div id="hex" class="result-text">—</div>
+          </div>
+        </div>
+        <div class="result-box" style="margin-top:12px">
+          <div class="result-label">Дешифрланған мәтін / Plaintext</div>
+          <div id="plain" class="result-text big">—</div>
+        </div>
+      </section>
+
+      <div class="tabs">
+        <button class="tab active" data-tab="steps">🧬 Қадамдар</button>
+        <button class="tab" data-tab="scheme">📐 Схема</button>
+        <button class="tab" data-tab="code">💻 Код логикасы</button>
+      </div>
+
+      <div id="steps" class="tabcontent"></div>
+      <div id="scheme" class="tabcontent hidden"></div>
+      <div id="code" class="tabcontent hidden"></div>
+    </main>
+  </div>
+
+  <div class="footer">Symmetric Encryption Lab • DES / AES-128 / Blowfish • Оқу және демонстрация үшін</div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+const info = {
+  AES:{
+    data:"Мәтін / Ciphertext Base64",
+    key:"16-byte кілт",
+    keyInfo:"AES-128 үшін кілт дәл 16 byte болуы керек. Мысалы: 1234567890ABCDEF",
+    desc:"128-bit блок • 128-bit кілт • 10 раунд"
+  },
+  DES:{
+    data:"Мәтін / Ciphertext Base64",
+    key:"8-byte кілт",
+    keyInfo:"DES үшін 8 byte кілт қолданылады. Мысалы: 12345678",
+    desc:"64-bit блок • 64-bit кілт • 16 Feistel раунды"
+  },
+  BLOWFISH:{
+    data:"Мәтін / Ciphertext Base64",
+    key:"4–56 byte кілт",
+    keyInfo:"Blowfish кілті 4–56 byte аралығында болуы керек. Мысалы: MySecretKey",
+    desc:"64-bit блок • 4–56 byte кілт • 16 Feistel раунды"
+  }
+};
+
+function utf8Bytes(s){ return new TextEncoder().encode(s); }
+function byteLen(s){ return utf8Bytes(s).length; }
+
+function wordArrayToHex(wordArray){ return wordArray.toString(CryptoJS.enc.Hex).toUpperCase(); }
+
+function setInfo(){
+  const a=$("algorithm").value, m=$("action").value;
+  $("dataLabel").textContent = m==="encrypt" ? "Мәтін" : "Ciphertext Base64";
+  $("keyLabel").textContent = info[a].key;
+  $("keyInfo").textContent = info[a].keyInfo;
+  $("algorithmInfo").innerHTML = `<span class="pill">${a==="BLOWFISH"?"BLOWFISH":a+"-128"}</span><br><br>${info[a].desc}`;
+  $("run").textContent = m==="encrypt" ? "🚀 ШИФРЛАУ" : "🚀 ДЕШИФРЛАУ";
+  if(m==="decrypt") $("data").placeholder="Шифрланған Base64 нәтижені осы жерге қой";
+  else $("data").placeholder=a==="AES"?"Мысалы: Hello AES Lab":a==="DES"?"Мысалы: Hello":"Мысалы: Hello BF!";
+  renderStatic();
+}
+
+function showError(msg){ $("error").innerHTML=msg?`<div class="error">⚠️ ${msg}</div>`:""; }
+
+function encrypt(){
+  const alg=$("algorithm").value, key=$("key").value, text=$("data").value;
+  if(!key || !text) throw new Error("Мәтін және кілт өрістерін толтыр.");
+  let encrypted;
+
+  if(alg==="AES"){
+    if(byteLen(key)!==16) throw new Error(`AES-128 кілті дәл 16 byte болуы керек. Қазір: ${byteLen(key)} byte.`);
+    const kw=CryptoJS.enc.Utf8.parse(key);
+    encrypted=CryptoJS.AES.encrypt(text, kw, {
+      mode:CryptoJS.mode.ECB,
+      padding:CryptoJS.pad.Pkcs7
+    });
+  }
+  if(alg==="DES"){
+    if(byteLen(key)!==8) throw new Error(`DES кілті дәл 8 byte болуы керек. Қазір: ${byteLen(key)} byte.`);
+    const kw=CryptoJS.enc.Utf8.parse(key);
+    encrypted=CryptoJS.DES.encrypt(text, kw, {
+      mode:CryptoJS.mode.ECB,
+      padding:CryptoJS.pad.Pkcs7
+    });
+  }
+  if(alg==="BLOWFISH"){
+    if(byteLen(key)<4 || byteLen(key)>56) throw new Error(`Blowfish кілті 4–56 byte болуы керек. Қазір: ${byteLen(key)} byte.`);
+    const kw=CryptoJS.enc.Utf8.parse(key);
+    encrypted=CryptoJS.Blowfish.encrypt(text, kw, {
+      mode:CryptoJS.mode.ECB,
+      padding:CryptoJS.pad.Pkcs7
+    });
+  }
+
+  const b64=encrypted.toString();
+  const raw=encrypted.ciphertext;
+  $("base64").textContent=b64;
+  $("hex").textContent=wordArrayToHex(raw);
+  $("plain").textContent="Шифрланған дерек";
+  renderSteps(b64, wordArrayToHex(raw));
+}
+
+function decrypt(){
+  const alg=$("algorithm").value, key=$("key").value, b64=$("data").value.trim();
+  if(!key || !b64) throw new Error("Ciphertext Base64 және кілтті енгіз.");
+  let decrypted;
+
+  if(alg==="AES"){
+    if(byteLen(key)!==16) throw new Error(`AES-128 кілті дәл 16 byte болуы керек. Қазір: ${byteLen(key)} byte.`);
+    decrypted=CryptoJS.AES.decrypt(b64, CryptoJS.enc.Utf8.parse(key), {mode:CryptoJS.mode.ECB,padding:CryptoJS.pad.Pkcs7});
+  }
+  if(alg==="DES"){
+    if(byteLen(key)!==8) throw new Error(`DES кілті дәл 8 byte болуы керек. Қазір: ${byteLen(key)} byte.`);
+    decrypted=CryptoJS.DES.decrypt(b64, CryptoJS.enc.Utf8.parse(key), {mode:CryptoJS.mode.ECB,padding:CryptoJS.pad.Pkcs7});
+  }
+  if(alg==="BLOWFISH"){
+    if(byteLen(key)<4 || byteLen(key)>56) throw new Error(`Blowfish кілті 4–56 byte болуы керек. Қазір: ${byteLen(key)} byte.`);
+    decrypted=CryptoJS.Blowfish.decrypt(b64, CryptoJS.enc.Utf8.parse(key), {mode:CryptoJS.mode.ECB,padding:CryptoJS.pad.Pkcs7});
+  }
+
+  const text=decrypted.toString(CryptoJS.enc.Utf8);
+  if(!text) throw new Error("Дешифрлау мүмкін болмады. Ciphertext немесе кілтті тексер.");
+  $("base64").textContent="Дешифрланды";
+  $("hex").textContent=wordArrayToHex(decrypted);
+  $("plain").textContent=text;
+  renderSteps("Decoded", wordArrayToHex(decrypted));
+}
+
+function renderSteps(result, hex){
+  const a=$("algorithm").value;
+  const encrypted=$("action").value==="encrypt";
+  if(a==="AES"){
+    $("steps").innerHTML=`
+      <div class="round"><span class="badge">INPUT</span><span>16-byte State</span><span>Key: 128 bit</span><span>Result: ${hex.slice(0,32)}</span></div>
+      <div class="round"><span class="badge">0</span><span>AddRoundKey</span><span>State ⊕ Key</span><span>Initial key mixing</span></div>
+      ${Array.from({length:9},(_,i)=>`<div class="round"><span class="badge">${i+1}</span><span>SubBytes → ShiftRows</span><span>MixColumns → AddRoundKey</span><span>Full AES round</span></div>`).join("")}
+      <div class="round"><span class="badge">10</span><span>SubBytes → ShiftRows</span><span>AddRoundKey</span><span>Final round</span></div>
+      <div class="note">AES-128 құрылымында 10 раунд бар. Соңғы раундта MixColumns орындалмайды.</div>`;
+  }else{
+    const name=a==="DES"?"DES":"Blowfish";
+    $("steps").innerHTML=`
+      <div class="round"><span class="badge">INPUT</span><span>64-bit block</span><span>L / R</span><span>${hex.slice(0,32)}</span></div>
+      ${Array.from({length:16},(_,i)=>`<div class="round"><span class="badge">${i+1}</span><span>Feistel round ${i+1}</span><span>${name==="DES"?"Expansion → XOR → S-box → P":"P-array → F-function → S-boxes"}</span><span>Swap L/R</span></div>`).join("")}
+      <div class="note">${name}: 16 Feistel раунды орындалады. Шифрлау мен дешифрлауда round-key реті кері бағытта қолданылады.</div>`;
+  }
+}
+
+function renderStatic(){
+  const a=$("algorithm").value;
+  if(a==="AES"){
+    $("scheme").innerHTML=`<div class="flow">
+      <div class="box">128-bit Block</div><div class="arrow">→</div><div class="box">AddRoundKey</div><div class="arrow">→</div>
+      <div class="box">SubBytes</div><div class="arrow">→</div><div class="box">ShiftRows</div><div class="arrow">→</div>
+      <div class="box">MixColumns</div><div class="arrow">→</div><div class="box">AddRoundKey</div><div class="arrow">→</div><div class="box">Ciphertext</div>
+    </div><div class="note">AES-128: 1 бастапқы AddRoundKey + 9 толық раунд + 1 соңғы раунд.</div>`;
+    $("code").innerHTML=`<pre>SubBytes → ShiftRows → MixColumns → AddRoundKey</pre>`;
+  }else if(a==="DES"){
+    $("scheme").innerHTML=`<div class="flow">
+      <div class="box">64-bit Block</div><div class="arrow">→</div><div class="box">Initial Permutation</div><div class="arrow">→</div>
+      <div class="box">L0 / R0</div><div class="arrow">→</div><div class="box">16 Feistel Rounds</div><div class="arrow">→</div>
+      <div class="box">R16 / L16</div><div class="arrow">→</div><div class="box">Final Permutation</div>
+    </div><div class="note"><b>F(R,K)</b> = Expansion 32→48 → XOR Key → S-boxes → P permutation.</div>`;
+    $("code").innerHTML=`<pre>F(R,K) = P( S( E(R) XOR K ) )
+
+L(i+1) = R(i)
+R(i+1) = L(i) XOR F(R(i), K(i))</pre>`;
+  }else{
+    $("scheme").innerHTML=`<div class="flow">
+      <div class="box">64-bit Block</div><div class="arrow">→</div><div class="box">L / R</div><div class="arrow">→</div>
+      <div class="box">16 Feistel Rounds</div><div class="arrow">→</div><div class="box">F-function</div><div class="arrow">→</div>
+      <div class="box">P-array + S-boxes</div><div class="arrow">→</div><div class="box">Ciphertext</div>
+    </div><div class="note"><b>F(x)</b> 4 S-box мәнін алып, қосу/XOR/қосу операциялары арқылы жаңа мән береді.</div>`;
+    $("code").innerHTML=`<pre>for (round = 1; round <= 16; round++) {
+    L = L XOR P[round];
+    R = R XOR F(L);
+    swap(L, R);
+}</pre>`;
+  }
+  if(!$("steps").innerHTML) $("steps").innerHTML='<div class="note">Алдымен мәтін мен кілтті енгізіп, ШИФРЛАУ батырмасын бас.</div>';
+}
+
+$("algorithm").addEventListener("change",setInfo);
+$("action").addEventListener("change",setInfo);
+
+$("run").addEventListener("click",()=>{
+  showError("");
+  try{
+    if($("action").value==="encrypt") encrypt();
+    else decrypt();
+  }catch(e){ showError(e.message); }
+});
+
+$("copy").addEventListener("click",async()=>{
+  const text=$("base64").textContent;
+  if(text && text!=="—" && text!=="Дешифрланды"){
+    await navigator.clipboard.writeText(text);
+    $("copy").textContent="✅ Көшірілді";
+    setTimeout(()=>$("copy").textContent="📋 Нәтижені көшіру",1200);
+  }
+});
+
+$("demo").addEventListener("click",()=>{
+  const a=$("algorithm").value, m=$("action").value;
+  if(a==="AES"){ $("key").value="1234567890ABCDEF"; $("data").value=m==="encrypt"?"Hello AES Lab":""; }
+  if(a==="DES"){ $("key").value="12345678"; $("data").value=m==="encrypt"?"Hello DES":"";
+  }
+  if(a==="BLOWFISH"){ $("key").value="MySecretKey"; $("data").value=m==="encrypt"?"Hello BF!":""; }
+  if(m==="decrypt") $("data").placeholder="Алдымен осы алгоритммен шифрланған Base64 енгіз.";
+  showError("");
+});
+
+$("clear").addEventListener("click",()=>{
+  $("data").value=""; $("key").value="";
+  $("base64").textContent="—"; $("hex").textContent="—"; $("plain").textContent="—";
+  showError(""); renderStatic();
+});
+
+document.querySelectorAll(".tab").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+    document.querySelectorAll(".tabcontent").forEach(x=>x.classList.add("hidden"));
+    btn.classList.add("active");
+    $(btn.dataset.tab).classList.remove("hidden");
+  });
+});
+
+setInfo();
+</script>
+</body>
+</html>
